@@ -27,7 +27,7 @@ Context Health adds a thread side panel to BB for exploring context usage, recor
 
 ## Screenshots
 
-All screenshots use fictional demo data. They show the overview, entry details and skill inventory; the current version also includes a **Loaded skills** tab.
+All screenshots use fictional demo data. They show the overview, entry details and skill inventory.
 
 <table>
   <tr>
@@ -166,14 +166,27 @@ bb plugin reload context-health
 
 Tests cover event deduplication, context boundaries, skill-read evidence, JSON-safe RPC results, bounded log inspection and panel interactions.
 
+### Project structure
+
+```text
+src/                 Plugin entry points, analysis and panel UI
+tests/               Automated tests
+assets/              Plugin icon and README screenshots
+dist/                Generated BB bundles (ignored by Git)
+output/              Local previews and verification artifacts (ignored by Git)
+README.md            Setup and usage
+PLUGIN_OVERVIEW.md   Marketplace description
+LICENSE              MIT licence
+```
+
 | File | Purpose |
 | --- | --- |
-| [app.tsx](app.tsx) / [app.css](app.css) | Panel UI and styling |
-| [server.ts](server.ts) | RPC, usage and inventory orchestration |
-| [shared.ts](shared.ts) | Provider-independent event inspection |
-| [analyze.ts](analyze.ts) | Codex log analysis and skill-read evidence |
-| [host.ts](host.ts) | Read-only session-file access |
-| [contract.ts](contract.ts) | Validated RPC schemas |
+| [app.tsx](src/app.tsx) / [app.css](src/app.css) | Panel UI and styling |
+| [server.ts](src/server.ts) | RPC, usage and inventory orchestration |
+| [shared.ts](src/shared.ts) | Provider-independent event inspection |
+| [analyze.ts](src/analyze.ts) | Codex log analysis and skill-read evidence |
+| [host.ts](src/host.ts) | Read-only session-file access |
+| [contract.ts](src/contract.ts) | Validated RPC schemas |
 
 ## License
 

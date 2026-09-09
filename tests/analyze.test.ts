@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createAnalyzer, estimateTokens, MAX_ENTRIES, loadedSkillEvidence } from './analyze.ts';
+import { createAnalyzer, estimateTokens, MAX_ENTRIES, loadedSkillEvidence } from '../src/analyze.ts';
 const row = (type: string, payload: unknown) => JSON.stringify({ type, payload });
 test('partitions skill catalogue without duplicate counts and ignores event mirrors', () => {
   const a = createAnalyzer();

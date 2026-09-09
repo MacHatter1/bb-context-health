@@ -14,7 +14,7 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ]
     },
     "noEmit": true,
@@ -22,7 +22,8 @@
     "allowImportingTsExtensions": true
   },
   "include": [
-    "*.ts",
-    "*.tsx"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts"
   ]
 }

@@ -14,7 +14,7 @@ test('panel filters, sorts and pages entries, and renders skill inventory', asyn
   try {
     const { fireEvent } = await import('@testing-library/react');
     const { loadPluginApp, renderSlot } = await import('@get-bb/plugin-sdk/testing/app');
-    const source = (await readFile(new URL('./app.tsx', import.meta.url), 'utf8')).replace("import './app.css';", '');
+    const source = (await readFile(new URL('../src/app.tsx', import.meta.url), 'utf8')).replace("import './app.css';", '');
     await writeFile(`${temporary}/app.mjs`, ts.transpileModule(source, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText);
     const app = await loadPluginApp(() => import(pathToFileURL(`${temporary}/app.mjs`).href));
     const slot = renderSlot(app.threadPanelActions[0]!, { threadId: 'thr_test', params: null }, {

@@ -12,9 +12,9 @@
     "branding": {
       "icon": "./assets/context-health.svg"
     },
-    "server": "./server.ts",
-    "app": "./app.tsx",
-    "host": "./host.ts",
+    "server": "./src/server.ts",
+    "app": "./src/app.tsx",
+    "host": "./src/host.ts",
     "skills": []
   },
   "dependencies": {
@@ -52,22 +52,16 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test *.test.ts",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
     "build": "bb plugin build"
   },
   "files": [
     "dist/",
+    "src/",
     "assets/",
     "README.md",
     "PLUGIN_OVERVIEW.md",
     "LICENSE",
-    "server.ts",
-    "host.ts",
-    "app.tsx",
-    "app.css",
-    "analyze.ts",
-    "shared.ts",
-    "contract.ts",
     "tsconfig.json"
   ],
   "license": "MIT",

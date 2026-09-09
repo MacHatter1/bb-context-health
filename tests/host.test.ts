@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import entry from './host.ts';
-import { hostContract } from './contract.ts';
+import entry from '../src/host.ts';
+import { hostContract } from '../src/contract.ts';
 
 test('host reads only the matching session, handles missing logs and cancellation', async () => {
   const home = await mkdtemp(join(tmpdir(), 'context-health-test-'));

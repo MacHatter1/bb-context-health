@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { BbPluginApi } from '@get-bb/plugin-sdk';
-import { analyzeEvents, readSharedContext, relevantSkills } from './shared.ts';
+import { analyzeEvents, readSharedContext, relevantSkills } from '../src/shared.ts';
 type Event = Awaited<ReturnType<BbPluginApi['sdk']['threads']['events']['list']>>[number];
 type Item = Extract<Event, { type: 'item/completed' }>['data']['item'];
 function completed(seq: number, item: Item, turnId = 'turn-1'): Event {
