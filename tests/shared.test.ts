@@ -43,6 +43,19 @@ test('bounded pagination pins its sequence and respects latest compaction', asyn
   assert.equal(result.compacted, true);
   assert.equal(result.entries[0].preview, 'after');
 });
+test('event pages stay within the BB list limit and still cover 1,000 events', async () => {
+  const calls: Array<Record<string, unknown>> = [];
+  let seq = 5000;
+  const sdk = { threads: { events: { async list(input: Record<string, unknown>) {
+    calls.push(input);
+    if (calls.length === 1) return [];
+    return Array.from({ length: Number(input.limit) }, () => { seq--; return completed(seq, {id: `m${seq}`, type: 'agentMessage', text: 'x'}); });
+  } } } } as unknown as BbPluginApi['sdk'];
+  const result = await readSharedContext(sdk, 'thr_test', 5000, null);
+  for (const call of calls) assert.ok(Number(call.limit) <= 100, `limit ${call.limit} exceeds 100`);
+  assert.equal(5000 - seq, 1000);
+  assert.ok(result.notices.some(n => n.includes('latest 1,000 relevant events')));
+});
 
 test('only accepted requests count, and provider user-message mirrors are not counted twice', () => {
   const request = (id: string, seq: number): Event => ({ id: `r${seq}`, seq, threadId: 'thr_test', createdAt: seq, scope: {kind: 'thread'}, type: 'client/turn/requested', data: { direction: 'outbound', requestId: id, source: 'tell', initiator: 'user', senderThreadId: null, systemMessageKind: 'unlabeled', systemMessageSubject: null, input: [{type:'text',text:'accepted',mentions:[]}], target: {kind:'thread-start'}, request: {method:'thread/start',params:{}}, execution: {model:'test',serviceTier:'default',reasoningLevel:'medium',permissionMode:'auto',source:'client/turn/requested'} } });

@@ -80,20 +80,24 @@ export function analyzeEvents(events: Event[], boundary: number, compacted: bool
   };
 }
 
+// BB rejects thread event list requests with a limit above 100 (bb >= 0.43).
+const EVENT_PAGE_SIZE = 100;
+const MAX_EVENT_PAGES = 10;
+
 export async function readSharedContext(sdk: BbPluginApi['sdk'], threadId: string, maxSeq: number, clearBoundary: number | null): Promise<Breakdown> {
   const boundaries = await sdk.threads.events.list({ threadId, types: ['thread/compacted', 'thread/context/cleared'], order: 'desc', beforeSeq: String(maxSeq + 1), limit: '1' });
   const boundary = Math.max(clearBoundary ?? 0, boundaries[0]?.seq ?? 0);
   const events: Event[] = [];
   let before = maxSeq + 1, limited = false;
   // ponytail: inspect at most 1,000 relevant events per refresh; add user pagination for longer histories.
-  for (let page = 0; page < 4; page++) {
-    const rows = await sdk.threads.events.list({ threadId, beforeSeq: String(before), afterSeq: String(boundary), order: 'desc', limit: '250', types: ['item/completed', 'client/turn/requested', 'turn/input/accepted'] });
+  for (let page = 0; page < MAX_EVENT_PAGES; page++) {
+    const rows = await sdk.threads.events.list({ threadId, beforeSeq: String(before), afterSeq: String(boundary), order: 'desc', limit: String(EVENT_PAGE_SIZE), types: ['item/completed', 'client/turn/requested', 'turn/input/accepted'] });
     events.push(...rows);
-    if (rows.length < 250) break;
+    if (rows.length < EVENT_PAGE_SIZE) break;
     const next = Math.min(...rows.map(r => r.seq));
     if (next >= before) throw new Error('Thread event pagination did not advance.');
     before = next;
-    limited = page === 3;
+    limited = page === MAX_EVENT_PAGES - 1;
   }
   const result = analyzeEvents(events, boundary, boundaries[0]?.type === 'thread/compacted');
   if (limited) result.notices.push('Inspection limited to the latest 1,000 relevant events. Older items, including some user-request records, may be omitted.');
