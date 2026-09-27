@@ -44,6 +44,26 @@ test('bounded pagination pins its sequence and respects latest compaction', asyn
   assert.equal(result.entries[0].preview, 'after');
 });
 
+test('event pagination never requests more than 100 rows and can collect 1,000 events', async () => {
+  const calls: Array<Record<string, unknown>> = [];
+  const sdk = { threads: { events: { async list(input: Record<string, unknown>) {
+    calls.push(input);
+    if (calls.length === 1) return [];
+    const before = Number(input.beforeSeq);
+    return Array.from({ length: 100 }, (_, index) => {
+      const seq = before - index - 1;
+      return completed(seq, { id: `item-${seq}`, type: 'agentMessage', text: `event-${seq}` });
+    });
+  } } } } as unknown as BbPluginApi['sdk'];
+
+  const result = await readSharedContext(sdk, 'thr_test', 1_000, null);
+
+  assert.equal(result.entries.length, 1_000);
+  assert.equal(calls.length, 11);
+  assert.ok(calls.every(call => Number(call.limit) <= 100));
+  assert.ok(result.notices.some(notice => notice.includes('latest 1,000 relevant events')));
+});
+
 test('only accepted requests count, and provider user-message mirrors are not counted twice', () => {
   const request = (id: string, seq: number): Event => ({ id: `r${seq}`, seq, threadId: 'thr_test', createdAt: seq, scope: {kind: 'thread'}, type: 'client/turn/requested', data: { direction: 'outbound', requestId: id, source: 'tell', initiator: 'user', senderThreadId: null, systemMessageKind: 'unlabeled', systemMessageSubject: null, input: [{type:'text',text:'accepted',mentions:[]}], target: {kind:'thread-start'}, request: {method:'thread/start',params:{}}, execution: {model:'test',serviceTier:'default',reasoningLevel:'medium',permissionMode:'auto',source:'client/turn/requested'} } });
   const accepted: Event = {id:'accept',seq:3,threadId:'thr_test',createdAt:3,scope:{kind:'turn',turnId:'turn-1'},type:'turn/input/accepted',data:{providerThreadId:'session',clientRequestId:'yes'}};

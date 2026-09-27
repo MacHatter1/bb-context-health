@@ -3,6 +3,9 @@ import type { Breakdown, Entry } from './contract.ts';
 import { estimateTokens, PREVIEW_LIMIT, MAX_ENTRIES, loadedSkillEvidence } from './analyze.ts';
 
 type Event = Awaited<ReturnType<BbPluginApi['sdk']['threads']['events']['list']>>[number];
+const EVENT_PAGE_LIMIT = 100;
+const MAX_EVENT_PAGES = 10;
+const MAX_EVENTS = EVENT_PAGE_LIMIT * MAX_EVENT_PAGES;
 export type Skill = Awaited<ReturnType<BbPluginApi['sdk']['skills']['list']>>['skills'][number];
 export const relevantSkills = (skills: Skill[], provider: string) => skills.filter(s => s.provider === null || s.provider === provider);
 const serialize = (value: unknown) => typeof value === 'string' ? value : value === undefined ? '' : JSON.stringify(value);
@@ -86,14 +89,14 @@ export async function readSharedContext(sdk: BbPluginApi['sdk'], threadId: strin
   const events: Event[] = [];
   let before = maxSeq + 1, limited = false;
   // ponytail: inspect at most 1,000 relevant events per refresh; add user pagination for longer histories.
-  for (let page = 0; page < 4; page++) {
-    const rows = await sdk.threads.events.list({ threadId, beforeSeq: String(before), afterSeq: String(boundary), order: 'desc', limit: '250', types: ['item/completed', 'client/turn/requested', 'turn/input/accepted'] });
+  for (let page = 0; page < MAX_EVENT_PAGES; page++) {
+    const rows = await sdk.threads.events.list({ threadId, beforeSeq: String(before), afterSeq: String(boundary), order: 'desc', limit: String(EVENT_PAGE_LIMIT), types: ['item/completed', 'client/turn/requested', 'turn/input/accepted'] });
     events.push(...rows);
-    if (rows.length < 250) break;
+    if (rows.length < EVENT_PAGE_LIMIT) break;
     const next = Math.min(...rows.map(r => r.seq));
     if (next >= before) throw new Error('Thread event pagination did not advance.');
     before = next;
-    limited = page === 3;
+    limited = page === MAX_EVENT_PAGES - 1 && events.length === MAX_EVENTS;
   }
   const result = analyzeEvents(events, boundary, boundaries[0]?.type === 'thread/compacted');
   if (limited) result.notices.push('Inspection limited to the latest 1,000 relevant events. Older items, including some user-request records, may be omitted.');
