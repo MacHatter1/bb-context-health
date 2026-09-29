@@ -21,11 +21,11 @@ export default function plugin(bb: BbPluginApi) {
         try {
           const [environment, identities, config] = await Promise.all([
             bb.sdk.environments.get({ environmentId: thread.environmentId }),
-            bb.sdk.threads.events.list({ threadId, types: ['thread/identity'], order: 'desc', limit: '1' }),
+            bb.sdk.threads.events.list({ threadId, types: ['thread/identity'], order: 'desc', limit: '1', afterSeq: String(timeline.contextBoundarySeq ?? 0), beforeSeq: String(timeline.maxSeq + 1) }),
             settings.get(),
           ]);
           const identity = identities[0];
-          if (!identity || identity.type !== 'thread/identity') breakdown.notices.push('The provider has not recorded a session identity yet.');
+          if (!identity || identity.type !== 'thread/identity' || identity.seq <= (timeline.contextBoundarySeq ?? 0) || identity.seq > timeline.maxSeq) breakdown.notices.push('The provider has not recorded a session identity for the current context yet.');
           else breakdown = await host.call('inspect', { sessionId: identity.data.providerThreadId, codexHome: config.codexHome }, { hostId: environment.hostId });
         } catch (error) { breakdown.notices.push(`Detailed inspection unavailable: ${error instanceof Error ? error.message : String(error)}`); }
       }

@@ -1,6 +1,7 @@
 {
   "name": "bb-plugin-context-health",
   "version": "0.1.1",
+  "description": "Inspect thread context usage, skills, instructions and conversation content.",
   "type": "module",
   "engines": {
     "bb": ">=0.42",
@@ -18,10 +19,11 @@
     "skills": []
   },
   "dependencies": {
+    "yaml": "^2.9.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@get-bb/plugin-sdk": "0.4.48",
+    "@get-bb/plugin-sdk": "^0.4.48",
     "@pierre/diffs": "^1.2.9",
     "@radix-ui/react-alert-dialog": "^1.1.19",
     "@radix-ui/react-context-menu": "^2.3.3",
@@ -52,6 +54,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
+    "typecheck": "npm run check",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "build": "bb plugin build"
   },
@@ -61,6 +64,7 @@
     "assets/",
     "README.md",
     "PLUGIN_OVERVIEW.md",
+    "CHANGELOG.md",
     "LICENSE",
     "tsconfig.json"
   ],

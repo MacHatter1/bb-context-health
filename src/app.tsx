@@ -13,6 +13,7 @@ export function ContextHealth({ threadId }: { threadId: string }) {
   const [view, setView] = useState<'content' | 'skills' | 'loaded'>('content');
   const [skillQuery, setSkillQuery] = useState('');
   const [report, setReport] = useState<Report | null>(null);
+  const [provider, setProvider] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -21,7 +22,7 @@ export function ContextHealth({ threadId }: { threadId: string }) {
   const [entryLimit, setEntryLimit] = useState(25);
   const [category, setCategory] = useState<string | null>(null);
   useEffect(() => {
-    setReport(null); setError(null); setCategory(null); setQuery(''); setSource('shared'); setSkillQuery(''); setView('content');
+    setReport(null); setProvider(null); setError(null); setCategory(null); setQuery(''); setSource('shared'); setSkillQuery(''); setView('content');
   }, [threadId]);
   useEffect(() => {
     let disposed = false, pending = false;
@@ -30,7 +31,7 @@ export function ContextHealth({ threadId }: { threadId: string }) {
       pending = true; setBusy(true);
       try {
         const result = await rpc.call('inspect', { threadId, source });
-        if (!disposed) { setReport(result); setError(null); }
+        if (!disposed) { setReport(result); setProvider(result.provider); setError(null); }
       } catch (cause) {
         if (!disposed) setError(cause instanceof Error ? cause.message : String(cause));
       } finally {
@@ -64,19 +65,20 @@ export function ContextHealth({ threadId }: { threadId: string }) {
   const matchingSkills = (report?.skills ?? []).filter(s => `${s.name} ${s.description ?? ''} ${s.pluginId ?? ''}`.toLowerCase().includes(skillQuery.toLowerCase()));
   return <section className="context-health" aria-label="Context Health">
     <header className="ch-toolbar">
-      <span className="ch-provider"><span className="ch-status-dot" />{report?.provider ?? 'Thread context'}</span>
+      <span className="ch-provider"><span className="ch-status-dot" />{provider ?? 'Thread context'}</span>
       <button onClick={() => setRevision(r => r + 1)} disabled={busy} aria-label="Refresh context health"><span aria-hidden="true" className={busy ? 'ch-refreshing' : ''}>↻</span> {busy ? 'Refreshing…' : 'Refresh'}</button>
     </header>
     {error && <p role="alert" className="ch-error">{error} {report && 'Showing the last successful snapshot.'}</p>}
     {!report && !error && <p role="status">Reading context…</p>}
-    {report && <>
+    {report &&
       <div className={`ch-meter-card ${percent !== null && percent >= 90 ? 'ch-critical' : ''}`}>
         <div className="ch-meter-heading"><span className="ch-eyebrow">Context window</span><span className="ch-badge">{usage ? usage.estimated ? 'Estimated' : 'Provider reported' : 'Awaiting usage'}</span></div>
         <div className="ch-metric">{percent === null ? 'Unavailable' : `${Math.round(percent)}%`}<span>{usage ? `${number(usage.usedTokens)} / ${number(usage.modelContextWindow)} tokens` : 'The provider has not reported usage.'}</span></div>
         {percent !== null && <progress className={percent >= 90 ? 'ch-high' : ''} value={Math.min(percent, 100)} max={100} aria-label="Context window used" />}
         <p className="ch-muted">{usage ? `${percent !== null && percent >= 90 ? 'Context nearly full' : percent !== null && percent >= 70 ? 'Context is filling up' : 'Room to continue'}` : 'Usage may appear after the next model response.'}</p>
-      </div>
-      {report.provider === 'codex' && <label className="ch-source-picker">Data source <select aria-label="Context data source" value={source} onChange={e => { setSource(e.target.value as 'shared' | 'codex'); setCategory(null); setQuery(''); setReport(null); }}><option value="shared">BB recorded activity (all providers)</option><option value="codex">Codex session detail</option></select></label>}
+      </div>}
+    {provider === 'codex' && <label className="ch-source-picker">Data source <select aria-label="Context data source" value={source} onChange={e => { setSource(e.target.value as 'shared' | 'codex'); setCategory(null); setQuery(''); setReport(null); setError(null); }}><option value="shared">BB recorded activity (all providers)</option><option value="codex">Codex session detail</option></select></label>}
+    {report && <>
       <nav className="ch-view-switch" aria-label="Context views">
         <button aria-pressed={view === 'content'} onClick={() => setView('content')}>Recorded content <span>{report.entries.length}</span></button>
         <button aria-pressed={view === 'skills'} onClick={() => setView('skills')}>Available skills <span>{report.skills.length}</span></button>
