@@ -1,6 +1,7 @@
 {
   "name": "bb-plugin-context-health",
   "version": "0.1.1",
+  "description": "Inspect thread context usage, skills, instructions and conversation content.",
   "type": "module",
   "engines": {
     "bb": ">=0.42",
@@ -52,6 +53,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
+    "typecheck": "npm run check",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "build": "bb plugin build"
   },
@@ -61,6 +63,7 @@
     "assets/",
     "README.md",
     "PLUGIN_OVERVIEW.md",
+    "CHANGELOG.md",
     "LICENSE",
     "tsconfig.json"
   ],

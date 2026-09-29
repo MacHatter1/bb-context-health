@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <!-- Glyph: assets/context-health.svg, the icon BB shows for Context Health. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#69cfbc"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#bg)"/>
+  <g transform="translate(24 24) scale(3)" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/>
+    <path d="m3 11.5 4 2m10 0 4-2M3 16h4l2-3 4 8 2-5h6"/>
+  </g>
+</svg>
