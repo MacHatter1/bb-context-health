@@ -1,6 +1,6 @@
 {
   "name": "bb-plugin-context-health",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Inspect thread context usage, skills, instructions and conversation content.",
   "type": "module",
   "engines": {

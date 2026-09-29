@@ -6,6 +6,8 @@ All notable changes to Context Health are documented here. The format follows
 
 ## Unreleased
 
+## 0.1.2 - 2026-09-29
+
 ### Added
 
 - A README logo using the plugin's own icon and mint-to-teal gradient.
@@ -17,6 +19,19 @@ All notable changes to Context Health are documented here. The format follows
 - Organise the README around features, installation, coverage and settings.
 - Align the store listing and package description with the README.
 - Add MacHatter1 to the MIT copyright notice, retaining the contributors' notice.
+- Allow SDK updates within the 0.4 series while retaining reproducible installs
+  through the lockfile.
+
+### Fixed
+
+- Restrict Codex session detail to identities within the current context and
+  timeline snapshot, avoiding stale results after a context clear.
+- Preserve skill paths containing spaces and recognise valid YAML frontmatter
+  regardless of field order.
+- Keep user and assistant messages in their original categories when they quote
+  an available-skills catalogue.
+- Keep the data source selector available during loading and after failed
+  inspection requests, allowing recovery to recorded activity.
 
 ## 0.1.1 - 2026-09-29
 
