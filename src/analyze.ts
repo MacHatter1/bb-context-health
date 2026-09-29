@@ -1,3 +1,4 @@
+import { parseDocument } from 'yaml';
 import type { Breakdown, Entry } from './contract.ts';
 
 export const MAX_ENTRIES = 1500;
@@ -18,12 +19,31 @@ function content(value: unknown): string {
 // Require both a skill-file reference and returned skill frontmatter; mentions alone are not load evidence.
 export function loadedSkillEvidence(call: string, output: string) {
   const strings = (value: unknown): string => typeof value === 'string' ? value : value && typeof value === 'object' ? Object.values(value).map(strings).join('\n') : '';
-  try { call = strings(JSON.parse(call)); } catch { /* Raw command text. */ }
+  const isSkillPath = (path: string) => /(?:^|[\\/])SKILL\.md$/.test(path);
+  const pathsIn = (value: unknown, key = ''): string[] => {
+    if (value && typeof value === 'object') return Object.entries(value).flatMap(([key, part]) => pathsIn(part, key));
+    if (typeof value !== 'string') return [];
+    // Structured file arguments are already decoded; preserve spaces and backslashes.
+    if (/^(?:path|file_path|filePath|filename|file)$/.test(key)) return isSkillPath(value) ? [value] : [];
+    // Keep quoted shell arguments intact, and recognise escaped spaces in bare paths.
+    return [...value.matchAll(/"((?:\\.|[^"\\])*)"|'([^']*)'|((?:\\.|[^\s"'`\\;|&(){}\[\],])+)/g)]
+      .map(match => match[1] !== undefined ? match[1].replace(/\\(["\\$`])/g, '$1') : match[2] ?? match[3].replace(/\\(.)/g, '$1'))
+      .filter(isSkillPath);
+  };
+  let argumentsValue: unknown = call;
+  try { argumentsValue = JSON.parse(call); } catch { /* Raw command text. */ }
   try { output = strings(JSON.parse(output)); } catch { /* Raw tool output. */ }
-  const paths = [...call.matchAll(/(?:^|[\s"'`])([^\s"'`]*SKILL\.md)(?=$|[\s"'`])/g)].map(m => m[1]);
-  const name = output.match(/(?:^|\n)---\r?\nname:\s*["']?([^\r\n"']+)["']?\r?\n/);
-  if (paths.length !== 1 || !name || !/\ndescription:/.test(output)) return undefined;
-  return { name: name[1].trim(), filePath: paths[0] };
+  const paths = pathsIn(argumentsValue);
+  const frontmatter = output.match(/^---[\t ]*\r?\n([\s\S]*?)^---[\t ]*(?:\r?\n|$)/m)?.[1];
+  if (paths.length !== 1 || frontmatter === undefined) return undefined;
+  try {
+    const document = parseDocument(frontmatter);
+    if (document.errors.length) return undefined;
+    const fields = record(document.toJSON());
+    const name = text(fields.name).trim();
+    if (!name || !text(fields.description).trim()) return undefined;
+    return { name, filePath: paths[0] };
+  } catch { return undefined; }
 }
 
 export function createAnalyzer() {
@@ -49,7 +69,7 @@ export function createAnalyzer() {
     const kind = text(p.type);
     if (kind === 'message') {
       const body = content(p.content), role = text(p.role);
-      if (body.includes('### Available skills')) skills(entries, body);
+      if ((role === 'developer' || role === 'system') && /^### Available skills[\t ]*\r?$/m.test(body)) skills(entries, body);
       else add(entries, role === 'developer' || role === 'system' ? 'Instructions' : role === 'assistant' ? 'Assistant messages' : 'User messages', `${role || 'Unknown'} message`, body);
     } else if (kind === 'function_call' || kind === 'custom_tool_call') {
       const name = text(p.name) || 'Tool call';

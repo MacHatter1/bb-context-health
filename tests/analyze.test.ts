@@ -56,3 +56,42 @@ test('loaded skills require returned frontmatter and an unambiguous skill read, 
   a.push(row('compacted', {message:'Summary'}));
   assert.equal(a.finish().entries.filter(e => e.loadedSkill).length, 0);
 });
+
+test('skill evidence preserves quoted, escaped and structured paths containing spaces', () => {
+  const filePath = '/workspace/My Project/.agents/skills/review/SKILL.md';
+  const body = '---\nname: review\ndescription: Review code\n---\nBody';
+  for (const call of [
+    `cat "${filePath}"`, `cat '${filePath}'`, `cat ${filePath.replaceAll(' ', '\\ ')}`,
+    JSON.stringify({ path: filePath }), JSON.stringify({ file_path: filePath }),
+    JSON.stringify({ arguments: { filePath } }), JSON.stringify({ cmd: `cat "${filePath}"` }),
+  ]) assert.deepEqual(loadedSkillEvidence(call, body), { name: 'review', filePath }, call);
+  const windowsPath = 'C:\\My Project\\skills\\review\\SKILL.md';
+  assert.deepEqual(loadedSkillEvidence(JSON.stringify({ path: windowsPath }), body), { name: 'review', filePath: windowsPath });
+  assert.equal(loadedSkillEvidence(`cat "${filePath}" "/another project/SKILL.md"`, body), undefined);
+  assert.equal(loadedSkillEvidence('cat /skills/NOT_A_SKILL.md', body), undefined);
+});
+
+test('skill evidence parses complete YAML frontmatter independently of field order', () => {
+  const call = 'cat /skills/review/SKILL.md';
+  for (const body of [
+    '---\ndescription: Review code\nname: review\n---\nBody',
+    'Tool output:\r\n---\r\ndescription: >\r\n  Review the code\r\nname: "review" # Skill name\r\n---\r\nBody',
+  ]) assert.deepEqual(loadedSkillEvidence(call, body), { name: 'review', filePath: '/skills/review/SKILL.md' });
+  for (const body of [
+    '---\nname: review\ndescription: Review code',
+    '---\nname: review\nname: duplicate\ndescription: Review code\n---\nBody',
+    '---\nname: 123\ndescription: Review code\n---\nBody',
+    '---\nname: review\n---\ndescription: Outside frontmatter',
+  ]) assert.equal(loadedSkillEvidence(call, body), undefined, body);
+});
+
+test('user and assistant messages quoting a skill catalogue keep their original categories', () => {
+  const body = 'Please explain this example:\n### Available skills\n- review: Review code (file: /skills/review/SKILL.md)\n';
+  const a = createAnalyzer();
+  a.push(row('response_item', { type: 'message', role: 'user', content: body }));
+  a.push(row('response_item', { type: 'message', role: 'assistant', content: body }));
+  assert.deepEqual(a.finish().entries.map(e => [e.category, e.preview]), [['User messages', body], ['Assistant messages', body]]);
+  const inline = createAnalyzer();
+  inline.push(row('response_item', { type: 'message', role: 'developer', content: 'A literal header: ### Available skills' }));
+  assert.equal(inline.finish().entries[0].title, 'developer message');
+});

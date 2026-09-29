@@ -310,8 +310,11 @@ CHANGELOG.md        Release history
 JSON-safe RPC results, bounded pagination and log inspection, and panel
 filtering, sorting and paging with the SDK test harness and JSDOM.
 
-The development SDK is pinned to `0.4.48`. React is provided by BB at runtime;
-Zod is the only declared runtime dependency. Keep generated `dist/` bundles,
+The development SDK uses `^0.4.48`, allowing updates within the 0.4 series;
+`package-lock.json` records the version used for reproducible installs. The
+runtime compatibility floor remains `>=0.4.48`. React is provided by BB at
+runtime; Zod validates RPC data and YAML parses skill frontmatter. Keep
+generated `dist/` bundles,
 local `output/` previews and workspace state out of Git.
 
 [PLUGIN_OVERVIEW.md](PLUGIN_OVERVIEW.md) is the store listing. Keep its claims

@@ -83,3 +83,15 @@ test('ordinary tool and command results omit absent skill evidence for JSON RPC'
   for (const entry of result.entries) assert.equal(Object.hasOwn(entry, 'loadedSkill'), false);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), result);
 });
+
+test('normalized reads preserve paths with spaces and recognise reordered frontmatter', () => {
+  const filePath = '/workspace/My Project/.agents/skills/review/SKILL.md';
+  const body = '---\ndescription: Review code\nname: review\n---\nBody';
+  const result = analyzeEvents([
+    completed(1, { id: 'tool', type: 'toolCall', tool: 'read', arguments: { path: filePath }, result: body, status: 'completed' }),
+    completed(2, { id: 'command', type: 'commandExecution', command: `cat "${filePath}"`, cwd: '/workspace', approvalStatus: null, aggregatedOutput: body, status: 'completed', exitCode: 0 }),
+  ], 0, false);
+  assert.deepEqual(result.entries.filter(e => e.loadedSkill).map(e => e.loadedSkill), [
+    { name: 'review', filePath }, { name: 'review', filePath },
+  ]);
+});
